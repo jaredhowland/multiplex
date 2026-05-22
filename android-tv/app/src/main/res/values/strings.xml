@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Multiplex TV</string>
+    <string name="shell_text">Android TV packaging scaffold for Multiplex.</string>
+</resources>
+

@@ -2,6 +2,8 @@ name: Flatpak CI
 
 on:
   push:
+    tags:
+      - "v*"
   pull_request:
 
 jobs:
@@ -32,12 +34,49 @@ jobs:
           cache-key: flatpak-builder-${{ github.sha }}
           arch: ${{ matrix.target.arch }}
 
+  build-android:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+      - name: Install Android SDK components
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
+      - name: Build Android APK
+        working-directory: android-tv
+        run: gradle :app:assembleRelease
+      - name: Upload Android APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android-tv/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
   publish-linux:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    needs: build-linux
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs:
+      - build-linux
+      - build-android
+    if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -45,22 +84,10 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           path: /tmp/out
-      - name: Extract branch name
-        id: extract_branch
-        run: echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_OUTPUT
-      - name: Publish pre-release to GitHub releases
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: release-${{ steps.extract_branch.outputs.branch }}
-          prerelease: true
-          overwrite_files: true
-          files: |
-            /tmp/out/*/*
       - name: Publish release to GitHub releases
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
           prerelease: false
           overwrite_files: true
           files: |

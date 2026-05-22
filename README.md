@@ -37,6 +37,8 @@ On Linux, Multiplex is available on Flathub:
 
 For other platforms, see [contributing](#contributing); development builds are also available on [GitHub releases](https://github.com/pojntfx/multiplex/releases/tag/release-main).
 
+For Android TV packaging, see [`/android-tv`](./android-tv/README.md).
+
 ## Tutorial
 
 ### 1. Start Streaming a Torrent
