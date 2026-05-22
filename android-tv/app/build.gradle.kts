@@ -34,9 +34,6 @@ android {
         jvmTarget = "17"
     }
 
-    buildFeatures {
-        viewBinding = true
-    }
 }
 
 dependencies {
@@ -45,4 +42,3 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.10.1")
     implementation("androidx.leanback:leanback:1.2.0")
 }
-
